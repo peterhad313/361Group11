@@ -1,6 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use work.eecs361.mux_n;
+
 
 entity mux is
   port (
@@ -12,6 +12,19 @@ entity mux is
 end mux;
 
 architecture structural of mux is
+  
+  component mux_n is
+  generic (
+	n	: integer
+  );
+  port (
+	sel	  : in	std_logic;
+	src0  :	in	std_logic_vector(n-1 downto 0);
+	src1  :	in	std_logic_vector(n-1 downto 0);
+	z	  : out std_logic_vector(n-1 downto 0)
+  );
+end component;
+
 begin
   mux_map: mux_n
 	generic map (n => 1)
