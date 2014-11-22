@@ -1,0 +1,11 @@
+Hannah Arntson
+ALU Individual Project
+
+4-bit Control Signal:
+	0000 : and
+	0001 : or
+	0010 : add
+	0011 : sub
+	0100 : sll
+	0101 : slt
+	0110 : sltu
