@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+
 entity opcode_splitter is   
 port
 (
@@ -27,8 +28,5 @@ func<= op_code_in(5 downto 0);
 shamt<= "000000000000000000000000000"&op_code_in(10 downto 6);
 immediate <= op_code_in(15)&"0000000000000000"& op_code_in(14 downto 0);
 jmp_addr<= op_code_in(25 downto 0);
-
-
-
 
 end struct;
