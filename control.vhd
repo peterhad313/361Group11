@@ -61,6 +61,21 @@ component or_3 is
   );
 end component;
 
+component and_8 is
+
+  port (
+  a   : in  std_logic;
+	b   : in  std_logic;
+	c   : in  std_logic;
+	d   : in  std_logic;
+	e   : in  std_logic;
+	f   : in  std_logic;
+  g   : in std_logic;
+  h   : in std_logic;
+	z   : out std_logic
+  );
+end component;
+
 
 --opcode based signals
 signal beq : std_logic;
@@ -114,7 +129,15 @@ signal not_beq: std_logic;
 signal not_bne: std_logic;
 signal not_sw: std_logic;
 signal not_lw: std_logic;
+signal not_andx: std_logic;
+signal not_orx:std_logic;
+signal not_sllx: std_logic;
+signal not_slt: std_logic;
 signal alu0temp: std_logic;
+--signal alu1temp: std_logic;
+
+signal useFunc: std_logic;
+
 
 
 begin
@@ -134,12 +157,18 @@ notf4_map: not_gate port map (x => func(2), z => notf4);
 notf5_map: not_gate port map (x => func(1), z => notf5);
 notf6_map: not_gate port map (x => func(0), z => notf6);
 
+funcCheck: and_6 port map (not1,not2,not3,not4,not5,not6,useFunc);
+
 --inverters for and gate signals that feed final or gates
 not_beq_map: not_gate port map (x => beq, z => not_beq);
 not_bne_map: not_gate port map (x => bne, z => not_bne);
 not_lw_map: not_gate port map (x => lw, z => not_lw);
 not_sw_map: not_gate port map (x => sw, z => not_sw);
 
+not_andx_map: not_gate port map (x => andx, z => not_andx);
+not_orx_map: not_gate port map (x => orx, z => not_orx);
+not_sllx_map: not_gate port map (x => sllx, z => not_sllx);
+not_slt_map: not_gate port map (x => slt, z => not_slt);
 
 --main 6-input and gates for opcode-based signals
 
@@ -147,31 +176,32 @@ beq_map: and_6 port map (a => not1, b => not2, c => not3, d => opcode(2), e => n
 bne_map: and_6 port map (a => not1, b => not2, c => not3, d => opcode(2), e => not5, f => opcode(0), z => bne);
 addi_map: and_6 port map (a => not1, b => not2, c => opcode(3), d => not4, e => not5, f => not6, z => addi);
 lw_map: and_6 port map (a => opcode(5), b => not2, c => not3, d => not4, e => opcode(1), f => opcode(0), z => lw);
-sw_map: and_6 port map (a => opcode(5), b => not2, c => opcode(3), d => not4, e => opcode(1), f => opcode(0), z => lw);
+sw_map: and_6 port map (a => opcode(5), b => not2, c => opcode(3), d => not4, e => opcode(1), f => opcode(0), z => sw);
 
 --main 6-input and gates for function-based signals
 
-add_map: and_6 port map (a => func(5), b => notf2, c => notf3, d => notf4, e => notf5, f => notf6, z => add);
-addu_map: and_6 port map (a => func(5), b => notf2, c => notf3, d => notf4, e => notf5, f => func(0), z => addu);
-and_map: and_6 port map (a => func(5), b => notf2, c => notf3, d => func(2), e => notf5, f => notf6, z => andx);
-or_map: and_6 port map (a => func(5), b => notf2, c => notf3, d => func(2), e => notf5, f => func(0), z => orx);
-sll_map: and_6 port map (a => notf1, b => notf2, c => notf3, d => notf4, e => notf5, f => notf6, z => sllx);
-slt_map: and_6 port map (a => func(5), b => notf2, c => func(3), d => notf4, e => func(1), f => notf6, z => slt);
-sltu_map: and_6 port map (a => func(5), b => notf2, c => func(3), d => notf4, e => func(1), f => func(0), z => sltu);
-sub_map: and_6 port map (a => func(5), b => notf2, c => notf3, d => notf4, e => func(1), f => notf6, z => sub);
-subu_map: and_6 port map (a => func(5), b => notf2, c => notf3, d => notf4, e => func(1), f => notf6, z => subu);
+add_map: and_8 port map ( func(5), notf2, notf3, notf4, notf5, notf6, '1', useFunc, add);
+addu_map: and_8 port map ( func(5), notf2, notf3, notf4, notf5, func(0),'1', useFunc, addu);
+and_map: and_8 port map ( func(5), notf2, notf3, func(2), notf5, notf6, '1', useFunc, andx);
+or_map: and_8 port map ( func(5), notf2, notf3, func(2), notf5, func(0), '1', useFunc, orx);
+sll_map: and_8 port map ( notf1, notf2, notf3, notf4, notf5, notf6, '1', useFunc, sllx);
+slt_map: and_8 port map ( func(5), notf2, func(3), notf4, func(1), notf6, '1', useFunc, slt);
+sltu_map: and_8 port map ( func(5), notf2, func(3), notf4, func(1), func(0), '1', useFunc, sltu);
+sub_map: and_8 port map ( func(5), notf2, notf3, notf4, func(1), notf6, '1', useFunc, sub);
+subu_map: and_8 port map ( func(5), notf2, notf3, notf4, func(1), notf6, '1', useFunc, subu);
 
 --main or gates to output signals
-or_rw_map: or_3 port map (not_beq, not_bne, not_sw,rw);
+or_rw_map: and_6 port map (not_beq, not_bne, not_sw,'1','1','1',rw);
 or_mux_ALU: or_4 port map(sllx, addi, lw, sw, mux_ALU);
 mux_write<= not_lw;
 or_branch: or_4 port map(bne,beq,'0','0',br);
 eq<=beq;
 memrd<=lw;
 memwr<=sw;
-alu(3)<='0';
+alu(3)<='0'; 
 or_alu2: or_4 port map (slt,sltu,sllx,'0', alu(2));
-or_alu1: or_4 port map(andx,orx,sllx,slt,alu(1));
+or_alu1: and_6 port map(not_andx,not_orx,not_sllx,not_slt,'1','1',alu(1));
+--notx: not_gate port map (alu1temp,);
 or_alu01: or_4 port map (orx,slt,sub,subu,alu0temp);
 or_alu02: or_4 port map (alu0temp,beq,bne,'0',alu(0));
 end architecture structural;
