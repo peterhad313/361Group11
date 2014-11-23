@@ -34,6 +34,7 @@ begin
 	
 	sig_slt(31 downto 1)<="0000000000000000000000000000000";
 	sig_sltu(31 downto 1)<="0000000000000000000000000000000";
+	
 	--Connect 32 bit_alu units
 	BA0: entity work.bit_alu
 		port map (
