@@ -15,7 +15,7 @@ architecture struct of adder_32 is
 begin
 	ADD0: entity work.bit_adder
 		port map(
-			a=>A(0), b=>B(0), cin=>0, sum=>sum(0), cout=>ctemp(0)
+			a=>A(0), b=>B(0), cin=>'0', sum=>sum(0), cout=>ctemp(0)
 		);
 		
 	Gen_ADD:
