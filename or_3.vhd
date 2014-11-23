@@ -3,18 +3,27 @@ use ieee.std_logic_1164.all;
 
 -- 3-input or gate
 
-entity big_or is
+entity or_3 is
  
   port (
     	a   : in  std_logic;
     	b   : in  std_logic;
     	c   : in std_logic;
-	z   : out std_logic;
+	z   : out std_logic
   );
-end big_or;
+end or_3;
 
-architecture structural of big_or is
+architecture structural of or_3 is
 signal or1 : std_logic;
+
+component or_gate is
+  port (
+    x   : in  std_logic;
+    y   : in  std_logic;
+    z   : out std_logic
+  );
+end component;
+
 
 begin
 or1_map: or_gate port map (x => a, y => b, z => or1);

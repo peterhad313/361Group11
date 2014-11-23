@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 
 -- 6 input and gate
 
-entity big_and is
+entity and_6 is
 
   port (
    	a   : in  std_logic;
@@ -12,16 +12,24 @@ entity big_and is
 	d   : in  std_logic;
 	e   : in  std_logic;
 	f   : in  std_logic;
-	z   : out std_logic;
+	z   : out std_logic
   );
-end big_and;
+end and_6;
 
-architecture structural of big_and is
+architecture structural of and_6 is
 
 signal and1_1 : std_logic;
 signal and1_2 : std_logic;
 signal and1_3 : std_logic;
 signal and2: std_logic;
+
+component and_gate is
+  port (
+    x   : in  std_logic;
+    y   : in  std_logic;
+    z   : out std_logic
+  );
+end component;
 
 begin
 and1_1_map: and_gate port map (x => a, y => b, z => and1_1);
