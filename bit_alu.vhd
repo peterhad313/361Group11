@@ -67,11 +67,11 @@ begin
 			x=>'1', y=>sub_cout_temp, z=>sltu_out_temp
 		);	
 	--Used to determine slt
-	sub_sum<=sig_sub;
-	or2: entity work.or_gate
-		port map (
-			x=>sub_sum, y=>sub_cout_temp, z=>slt_out
-		);
+	slt_out<=sig_sub;
+	-- or2: entity work.or_gate
+		-- port map (
+			-- x=>sub_sum, y=>sub_cout_temp, z=>slt_out
+		-- );
 	
 	R<=R_temp;
 	sub_cout<=sub_cout_temp; 

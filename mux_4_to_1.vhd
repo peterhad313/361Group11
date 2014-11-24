@@ -10,7 +10,7 @@ entity mux_4_to_1 is
 		);
 end mux_4_to_1;
 --
-architecture struct of mux_5_to_1 is
+architecture struct of mux_4_to_1 is
    signal and_out0, and_out1, and_out2, and_out3 : std_logic;
    signal or_out0, or_out1 : std_logic;
 
