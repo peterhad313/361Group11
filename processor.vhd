@@ -43,6 +43,22 @@ port
 end component;
 
 --Memory
+component sram is
+generic (
+	mem_file : string
+	);
+port (
+	--clk   : in  std_logic;
+	cs	  : in	std_logic;
+	oe	  :	in	std_logic;
+	we	  :	in	std_logic;
+	addr  : in	std_logic_vector(31 downto 0);
+	din	  :	in	std_logic_vector(31 downto 0);
+	dout  :	out std_logic_vector(31 downto 0)
+	);
+end component;
+
+
 component syncram is
 generic (
 	mem_file : string
@@ -57,6 +73,7 @@ port (
 	dout  :	out std_logic_vector(31 downto 0)
 	);
 end component;
+
 
 --32 bit Mux
 component mux_32 is
@@ -132,6 +149,14 @@ port (
   );
 end component;
 
+component and_gate is
+port (
+    x   : in  std_logic;
+    y   : in  std_logic;
+    z   : out std_logic
+  );
+end component;
+
 component mux_5 is
 	port (
 		sel : in std_logic;
@@ -139,6 +164,22 @@ component mux_5 is
 		src1: in std_logic_vector(4 downto 0);
 		z	: out std_logic_vector(4 downto 0)
 	);
+end component;
+
+component nor_gate is
+  port (
+    x   : in  std_logic;
+    y   : in  std_logic;
+    z   : out std_logic
+  );
+end component;
+
+component xnor_gate is
+  port (
+    x   : in  std_logic;
+    y   : in  std_logic;
+    z   : out std_logic
+  );
 end component;
 
 --*************************************************
@@ -185,7 +226,11 @@ signal InstRead, InstWrite: std_logic;
 signal readWord: std_logic_vector(31 downto 0);
 signal nandTemps: std_logic_vector(3 downto 0);
 signal rTypeInstruction: std_logic;
-
+signal shiftLogic: std_logic;
+signal double_muxed_ALU_B: std_logic_vector(31 downto 0);
+signal shiftTemp: std_logic;
+signal branch_temp: std_logic;
+signal branch_mux_signal: std_logic;
 
 
 begin
@@ -197,6 +242,8 @@ mem1: syncram
 	generic map ("bills_branch.dat")
 	port map (clk, '1', '1', '0', PC_out, x"00000000", instruction); --Instruction memory
 --Logic to increment PC
+xnor1: xnor_gate port map (ze,eq, branch_temp);
+and2: and_gate port map (branch_temp, br, branch_mux_signal);
 m2: mux_32 port map (br, incremented_PC, branched_PC, muxed_PC);
 a1: adder_32 port  map (PC_out, x"00000004", incremented_PC, add_cout);
 a2: adder_32 port map (instruction, incremented_PC, branched_PC, add_cout);
@@ -212,14 +259,17 @@ m5: mux_5 port map (rTypeInstruction, rd, selB, writeRegSel);
 control_unit: control port map (opcode, func, rw, mux_ALU, mux_write, br, eq, memrd, memwr, alu);
 or1: or_gate port map (memrd, memwr, memActive);
 --Register file
-r1: register_file port map (regA,regB, muxedRegWrite, memwr,selA,selB,writeRegSel,clk);
+r1: register_file port map (regA,regB, muxedRegWrite, rw,selA,selB,writeRegSel,clk);
 --Mux into ALU
 m3: mux_32 port map (mux_ALU, regB, immediate,muxed_ALU_B); -- alu input b
-alu1: alu_32 port map (alu, regA, muxed_ALU_B, cout, ovf, ze, ALU_out);
+nor1: nor_gate port map (opcode(5),opcode(3), shiftTemp);
+and1: and_gate port map (shiftTemp, mux_ALU, shiftLogic);
+m6: mux_32 port map (shiftLogic, muxed_ALU_B, shamt, double_muxed_ALU_B);
+alu1: alu_32 port map (alu, regA, double_muxed_ALU_B, cout, ovf, ze, ALU_out);
 --Data memory
-mem2: syncram 
-	generic map (mem_file=>"bills_branch.dat")
-	port map (clk, memActive, memrd, memwr, ALU_out, regB, readWord); --Data memory
+mem2: sram 
+	generic map ("bills_branch.dat")
+	port map (memActive, memrd, memwr, ALU_out, regB, readWord); --Data memory
 --Mux to select data
 m4: mux_32 port map (mux_write, readWord, ALU_out, muxedRegWrite); -- Write mux
 
