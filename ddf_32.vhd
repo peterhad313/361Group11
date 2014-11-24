@@ -15,7 +15,7 @@ architecture struct of ddf_32 is
   port (
 	clk	: in  std_logic;
 	d	: in  std_logic;
-	q	: out std_logic
+	q	: out std_logic:='0'
   );
 end component;
   
