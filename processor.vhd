@@ -4,7 +4,8 @@ use ieee.std_logic_1164.all;
 entity processor is   
 port
 (
-	clk: in std_logic
+	clk: in std_logic;
+	reset: in std_logic
 	);
 end processor;
 
@@ -128,7 +129,7 @@ end component;
 --*************************************************
 --PC Signals
 signal muxed_PC: std_logic_vector(31 downto 0); --Input to PC flip-flop
-signal PC_out: std_logic_vector(31 downto 0); --Next PC
+signal PC_in, PC_out: std_logic_vector(31 downto 0); --Next PC
 signal incremented_PC: std_logic_vector(31 downto 0); --Incremented PC
 signal branched_PC: std_logic_vector(31 downto 0); --Branched PC
 --Instruction signals
@@ -167,13 +168,14 @@ signal readWord: std_logic_vector(31 downto 0);
 
 begin
 --PC unit
-pc: ddf_32 port map (clk, muxed_PC, PC_out);
+m1: mux_32 port map (reset, muxed_PC, x"00400020", PC_in);
+pc: ddf_32 port map (clk, PC_in, PC_out);
 --Instruction memory
 mem1: syncram 
 	generic map (mem_file=>"bills_branch.dat")
 	port map (clk, '1', '1', '0', PC_out, x"00000000", instruction); --Instruction memory
 --Logic to increment PC
-m1: mux_32 port map (br, incremented_PC, branched_PC, muxed_PC);
+m2: mux_32 port map (br, incremented_PC, branched_PC, muxed_PC);
 a1: adder_32 port  map (PC_out, x"00000004", incremented_PC, add_cout);
 a2: adder_32 port map (instruction, incremented_PC, branched_PC, add_cout);
 --Instruction splitter
@@ -184,14 +186,14 @@ or1: or_gate port map (memrd, memwr, memActive);
 --Register file
 r1: register_file port map (regA,regB, muxedRegWrite, memwr,selA,selB,writeRegSel,clk);
 --Mux into ALU
-m2: mux_32 port map (mux_ALU, regB, immediate,muxed_ALU_B); -- alu input b
+m3: mux_32 port map (mux_ALU, regB, immediate,muxed_ALU_B); -- alu input b
 alu1: alu_32 port map (alu, regA, muxed_ALU_B, cout, ovf, ze, ALU_out);
 --Data memory
 mem2: syncram 
 	generic map (mem_file=>"bills_branch.dat")
 	port map (clk, memActive, memrd, memwr, ALU_out, regB, readWord); --Data memory
 --Mux to select data
-m3: mux_32 port map (mux_write, ALU_out, readWord, muxedRegWrite); -- Write mux
+m4: mux_32 port map (mux_write, ALU_out, readWord, muxedRegWrite); -- Write mux
 
 
 end architecture ; -- struct
