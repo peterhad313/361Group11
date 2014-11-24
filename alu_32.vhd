@@ -27,6 +27,7 @@ architecture struct of alu_32 is
 	signal ovf_temp1, ovf_temp2				: std_logic;
 	signal ovf_neg, ovf_pos					: std_logic;
 	signal A_not, B_not, R_not				: std_logic;
+	signal sig_sll							: std_logic_vector(31 downto 0);
 begin
 	--Decode the control signal
 	my_dec_4: entity work.dec_n generic map(n=>4)
@@ -40,8 +41,8 @@ begin
 		port map (
 			ctrl=>ctrl_dec(6 downto 0),
 			A=>A(0), B=>B(0),
-			cin_add=>'0', cin_sub=>'1', cin_sll=>'0', z_in=>'1',
-			add_cout=>add_ctemp(0), sub_cout=>sub_ctemp(0), sll_cout=>sll_ctemp(0),
+			cin_add=>'0', cin_sub=>'1', z_in=>'1',
+			add_cout=>add_ctemp(0), sub_cout=>sub_ctemp(0),
 			slt_out=>slt_temp, sltu_out=>sltu_temp, z_out=>ze_temp(0),
 			R=>R_temp(0)
 		);
@@ -52,8 +53,8 @@ begin
 		port map (
 			ctrl=>ctrl_dec(6 downto 0),
 			A=>A(i), B=>B(i),
-			cin_add=>add_ctemp(i-1), cin_sub=>sub_ctemp(i-1), cin_sll=>sll_ctemp(i-1), z_in=>ze_temp(i-1),
-			add_cout=>add_ctemp(i), sub_cout=>sub_ctemp(i), sll_cout=>sll_ctemp(i),
+			cin_add=>add_ctemp(i-1), cin_sub=>sub_ctemp(i-1), z_in=>ze_temp(i-1),
+			add_cout=>add_ctemp(i), sub_cout=>sub_ctemp(i),
 			slt_out=> slt_temp, sltu_out=>sltu_temp, z_out=>ze_temp(i),
 			R=>R_temp(i)
 		);
@@ -63,8 +64,8 @@ begin
 	port map (
 		ctrl=>ctrl_dec(6 downto 0),
 		A=>A(31), B=>B(31),
-		cin_add=>add_ctemp(30), cin_sub=>sub_ctemp(30), cin_sll=>sll_ctemp(30), z_in=>ze_temp(30),
-		add_cout=>add_ctemp(31), sub_cout=>sub_ctemp(31), sll_cout=>sll_ctemp(31),
+		cin_add=>add_ctemp(30), cin_sub=>sub_ctemp(30), z_in=>ze_temp(30),
+		add_cout=>add_ctemp(31), sub_cout=>sub_ctemp(31),
 		slt_out=>sig_slt(0), sltu_out=>sig_sltu(0), z_out=>ze,
 		R=>R_temp(31)
 		);
@@ -72,7 +73,7 @@ begin
 	--Set output cout
 	mux2: entity work.mux_3_to_1
 		port map (
-			D0=>add_ctemp(31), D1=>sub_ctemp(31), D2=>sll_ctemp(31), ctrl_dec=>ctrl_dec(4 downto 2), F=>cout
+			D0=>add_ctemp(31), D1=>sub_ctemp(31), D2=>'0', ctrl_dec=>ctrl_dec(4 downto 2), F=>cout
 		);
 	
 	--Set overflow
@@ -110,12 +111,18 @@ begin
 			x=>ovf_temp1, y=>ovf_temp2, z=>ovf
 		);
 		
-	--Mux to select output R, incorporating slt and sltu
+	--Shift logical left
+	set_sll: entity work.sll_32
+		port map (
+			x=>A, y=>B, z=>sig_sll
+		);
+		
+	--Mux to select output R, incorporating sll, slt and sltu
 	Gen_MUX:
 	for i in 0 to 31 generate
 		MUXX: entity work.mux_7_to_1
 			port map (
-				D0=>R_temp(i), D1=>R_temp(i), D2=>R_temp(i), D3=>R_temp(i), D4=>R_temp(i), D5=>sig_slt(i), D6=>sig_sltu(i), ctrl_dec=>ctrl_dec(6 downto 0), F=>R(i)
+				D0=>R_temp(i), D1=>R_temp(i), D2=>R_temp(i), D3=>R_temp(i), D4=>sig_sll(i), D5=>sig_slt(i), D6=>sig_sltu(i), ctrl_dec=>ctrl_dec(6 downto 0), F=>R(i)
 			);
 	end generate;
 	
