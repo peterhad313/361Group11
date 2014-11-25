@@ -13,6 +13,7 @@ port
 	func: out std_logic_vector( 5 downto 0);
 	jmp_addr: out std_logic_vector(25 downto 0);
 	immediate: out std_logic_vector(31 downto 0);
+	shiftedImmediate: out std_logic_vector(31 downto 0);
 	shamt: out std_logic_vector(31 downto 0)
 	);
 end opcode_splitter;
@@ -26,7 +27,9 @@ regB_sel<= op_code_in(20 downto 16);
 regC_sel<= op_code_in(15 downto 11);
 func<= op_code_in(5 downto 0);
 shamt<= "000000000000000000000000000"&op_code_in(10 downto 6);
-immediate <= op_code_in(15)&"0000000000000000"& op_code_in(14 downto 0);
+immediate <= op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)& op_code_in(14 downto 0);
+shiftedImmediate<=op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15)&op_code_in(15 downto 0)&"00";
+
 jmp_addr<= op_code_in(25 downto 0);
 
 end struct;

@@ -23,6 +23,7 @@ port
 	func: out std_logic_vector( 5 downto 0);
 	jmp_addr: out std_logic_vector(25 downto 0);
 	immediate: out std_logic_vector(31 downto 0);
+	shiftedImmediate: out std_logic_vector(31 downto 0);
 	shamt: out std_logic_vector(31 downto 0)
 	);
 end component;
@@ -200,6 +201,7 @@ signal opcode: std_logic_vector(5 downto 0); --Opcode from instruction
 signal func: std_logic_vector( 5 downto 0); --Function from instruction
 signal jmp_addr:  std_logic_vector(25 downto 0); --Jump address from instruction
 signal immediate:  std_logic_vector(31 downto 0); --Add or subtract immediate
+signal shiftedImmediate: std_logic_vector(31 downto 0);
 signal shamt:  std_logic_vector(31 downto 0); --Shift amount
 --Control signals
 signal rw : std_logic; --register write
@@ -231,30 +233,32 @@ signal double_muxed_ALU_B: std_logic_vector(31 downto 0);
 signal shiftTemp: std_logic;
 signal branch_temp: std_logic;
 signal branch_mux_signal: std_logic;
-
+signal reg_clk: std_logic;
 
 begin
+
+reg_clk <= not clk;
 --PC unit
 m1: mux_32 port map (reset, muxed_PC, x"00400020", PC_in);
 pc: ddf_32 port map (clk, PC_in, PC_out);
 --Instruction memory
 mem1: syncram 
-	generic map ("bills_branch.dat")
-	port map (clk, '1', '1', '0', PC_out, x"00000000", instruction); --Instruction memory
+	generic map ("unsigned_sum.dat")
+	port map (clk, '1', '1', '0', PC_in, x"00000000", instruction); --Instruction memory
 --Logic to increment PC
 xnor1: xnor_gate port map (ze,eq, branch_temp);
 and2: and_gate port map (branch_temp, br, branch_mux_signal);
-m2: mux_32 port map (br, incremented_PC, branched_PC, muxed_PC);
+m2: mux_32 port map (branch_mux_signal, incremented_PC, branched_PC, muxed_PC);
 a1: adder_32 port  map (PC_out, x"00000004", incremented_PC, add_cout);
-a2: adder_32 port map (instruction, incremented_PC, branched_PC, add_cout);
+a2: adder_32 port map (shiftedImmediate, incremented_PC, branched_PC, add_cout);
 --Instruction splitter
-inst1: opcode_splitter port map (instruction, selA, selB, rd, opcode, func, jmp_addr, immediate, shamt);
-nand1: nand_gate port map (opcode(5),opcode(4),nandTemps(3));
-nand2: nand_gate port map (opcode(3), opcode (2), nandTemps(2));
-nand3: nand_gate port map (opcode(1), opcode(0), nandTemps(1));
-nand4: nand_gate port map (nandTemps(3), nandTemps(2), nandTemps(0));
-nand5: nand_gate port map (nandTemps(1), nandTemps(0),rTypeInstruction);
-m5: mux_5 port map (rTypeInstruction, rd, selB, writeRegSel);
+inst1: opcode_splitter port map (instruction, selA, selB, rd, opcode, func, jmp_addr, immediate, shiftedImmediate, shamt);
+nand1: nor_gate port map (opcode(5),opcode(4),nandTemps(3));
+nand2: nor_gate port map (opcode(3), opcode (2), nandTemps(2));
+nand3: nor_gate port map (opcode(1), opcode(0), nandTemps(1));
+nand4: and_gate port map (nandTemps(3), nandTemps(2), nandTemps(0));
+nand5: and_gate port map (nandTemps(1), nandTemps(0),rTypeInstruction);
+m5: mux_5 port map (rTypeInstruction, selB, rd, writeRegSel);
 --Control unit
 control_unit: control port map (opcode, func, rw, mux_ALU, mux_write, br, eq, memrd, memwr, alu);
 or1: or_gate port map (memrd, memwr, memActive);
@@ -267,9 +271,9 @@ and1: and_gate port map (shiftTemp, mux_ALU, shiftLogic);
 m6: mux_32 port map (shiftLogic, muxed_ALU_B, shamt, double_muxed_ALU_B);
 alu1: alu_32 port map (alu, regA, double_muxed_ALU_B, cout, ovf, ze, ALU_out);
 --Data memory
-mem2: sram 
-	generic map ("bills_branch.dat")
-	port map (memActive, memrd, memwr, ALU_out, regB, readWord); --Data memory
+mem2: syncram 
+	generic map ("unsigned_sum.dat")
+	port map (reg_clk,memActive, memrd, memwr, ALU_out, regB, readWord); --Data memory
 --Mux to select data
 m4: mux_32 port map (mux_write, readWord, ALU_out, muxedRegWrite); -- Write mux
 
