@@ -243,7 +243,7 @@ m1: mux_32 port map (reset, muxed_PC, x"00400020", PC_in);
 pc: ddf_32 port map (clk, PC_in, PC_out);
 --Instruction memory
 mem1: syncram 
-	generic map ("unsigned_sum.dat")
+	generic map ("bills_branch.dat")
 	port map (clk, '1', '1', '0', PC_in, x"00000000", instruction); --Instruction memory
 --Logic to increment PC
 xnor1: xnor_gate port map (ze,eq, branch_temp);
@@ -272,7 +272,7 @@ m6: mux_32 port map (shiftLogic, muxed_ALU_B, shamt, double_muxed_ALU_B);
 alu1: alu_32 port map (alu, regA, double_muxed_ALU_B, cout, ovf, ze, ALU_out);
 --Data memory
 mem2: syncram 
-	generic map ("unsigned_sum.dat")
+	generic map ("bills_branch.dat")
 	port map (reg_clk,memActive, memrd, memwr, ALU_out, regB, readWord); --Data memory
 --Mux to select data
 m4: mux_32 port map (mux_write, readWord, ALU_out, muxedRegWrite); -- Write mux
